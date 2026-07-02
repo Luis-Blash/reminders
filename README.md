@@ -35,6 +35,95 @@ npm test          # tests unitarios (jest) del motor de ocurrencias
 npx tsc --noEmit  # chequeo de tipos
 ```
 
+## Cómo generar un APK instalable
+
+El proyecto **no usa EAS** (build en la nube de Expo): se compila localmente
+con Gradle, igual que cualquier proyecto Android nativo, porque ya corriste
+`npx expo prebuild` y existe la carpeta `android/`.
+
+### APK rápido (para instalar en tu teléfono o compartir para probar)
+
+```bash
+cd android
+./gradlew assembleRelease        # Windows: gradlew.bat assembleRelease
+```
+
+El APK queda en:
+
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+Instálalo con `adb install android/app/build/outputs/apk/release/app-release.apk`
+o pásalo al teléfono y ábrelo (activa "instalar de orígenes desconocidos" si
+Android lo pide).
+
+⚠️ Este build usa el **keystore de debug** que Expo genera automáticamente
+(`android/app/debug.keystore`) — mira `signingConfigs` en
+`android/app/build.gradle`. Sirve perfecto para instalar en tu propio
+dispositivo o compartir con quien confíes, pero **no es válido para publicar
+en Google Play** (Play exige tu propio keystore, y las actualizaciones futuras
+deben firmarse siempre con el mismo).
+
+### APK para publicar (con tu propio keystore)
+
+1. Genera un keystore una sola vez (guárdalo bien, si lo pierdes no puedes
+   actualizar la app en Play nunca más):
+
+   ```bash
+   keytool -genkeypair -v -keystore my-release-key.keystore \
+     -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
+   ```
+
+2. Copia el archivo a `android/app/` y agrega las credenciales a
+   `android/gradle.properties` (no lo subas a git si el repo es público):
+
+   ```properties
+   MYAPP_RELEASE_STORE_FILE=my-release-key.keystore
+   MYAPP_RELEASE_KEY_ALIAS=my-key-alias
+   MYAPP_RELEASE_STORE_PASSWORD=********
+   MYAPP_RELEASE_KEY_PASSWORD=********
+   ```
+
+3. En `android/app/build.gradle`, dentro de `signingConfigs`, agrega un bloque
+   `release` que use esas variables y apúntalo desde `buildTypes.release`:
+
+   ```gradle
+   signingConfigs {
+       debug { ... }
+       release {
+           storeFile file(MYAPP_RELEASE_STORE_FILE)
+           storePassword MYAPP_RELEASE_STORE_PASSWORD
+           keyAlias MYAPP_RELEASE_KEY_ALIAS
+           keyPassword MYAPP_RELEASE_KEY_PASSWORD
+       }
+   }
+   buildTypes {
+       release {
+           signingConfig signingConfigs.release   // en vez de signingConfigs.debug
+           ...
+       }
+   }
+   ```
+
+4. Corre `cd android && ./gradlew assembleRelease` de nuevo — el APK resultante
+   ya queda firmado con tu keystore.
+
+> Nota: `npx expo prebuild` **regenera** `android/` y pisa estos cambios de
+> `build.gradle`. Si vuelves a correr prebuild, tendrás que repetir el paso 3
+> (o mover la config de signing a `app.json` bajo un plugin de config, para
+> que sobreviva a futuros prebuilds).
+
+### AAB en vez de APK (si algún día publicas en Play Store)
+
+Google Play pide `.aab` (Android App Bundle), no `.apk`:
+
+```bash
+cd android
+./gradlew bundleRelease
+# sale en android/app/build/outputs/bundle/release/app-release.aab
+```
+
 ## Arquitectura por capas
 
 El código vive en `src/` y sigue una regla de imports estricta (no la rompas al
