@@ -1,6 +1,5 @@
 import '../global.css';
 
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
@@ -40,9 +39,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <BottomSheetModalProvider>
-          <Stack screenOptions={{ headerShown: false }} />
-        </BottomSheetModalProvider>
+        <Stack screenOptions={{ headerShown: false }} />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

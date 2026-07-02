@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useCallback, useState } from 'react';
@@ -73,6 +74,12 @@ export default function Settings() {
           <Text className="text-base font-semibold text-navy">Tema</Text>
           <Text className="text-sm text-gray">Claro · Oscuro (próximamente)</Text>
         </View>
+      </View>
+
+      <View className="mt-auto items-center pb-6">
+        <Text className="text-xs text-gray">
+          Recordatorios · v{Constants.expoConfig?.version ?? '0.0.0'}
+        </Text>
       </View>
     </SafeAreaView>
   );

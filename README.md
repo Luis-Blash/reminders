@@ -16,8 +16,8 @@ producto (decisiones de comportamiento, modelo de datos, criterios de aceptació
 - **expo-notifications** + **expo-device** para notificaciones locales
 - **zustand** para estado de UI mínimo (tema)
 - **date-fns** para cálculo de fechas/ocurrencias
-- **@gorhom/bottom-sheet** para el selector de hora
-- **@react-native-community/datetimepicker** para hora y fecha
+- **@react-native-community/datetimepicker** para hora y fecha (diálogo nativo
+  de Android; ver nota abajo sobre por qué no se usa un bottom sheet aquí)
 
 ## Cómo correrlo
 
@@ -400,6 +400,21 @@ Cosas ambiguas en la especificación original donde elegí la opción más simpl
   `tsc --noEmit` falla con rutas dinámicas (`/reminder/${id}`) aunque el código
   esté bien. Si lo vuelves a activar, corre `npx expo start` una vez para
   regenerar los tipos antes de validar con `tsc`.
+- **Selector de hora sin bottom sheet**: la especificación original (§6.1)
+  mencionaba un `TimePickerSheet` como bottom sheet. En Android,
+  `@react-native-community/datetimepicker` **siempre** se abre como diálogo
+  modal nativo (con su propio CANCELAR/ACEPTAR) sin importar el `display`
+  elegido — no existe un modo realmente embebido como en iOS. Envolverlo en un
+  `BottomSheetModal` (con `@gorhom/bottom-sheet`) producía dos modales
+  encimados. Se removió esa dependencia y `TimePickerSheet.tsx` ahora solo
+  muestra/oculta el `DateTimePicker` nativo directo, igual que ya hacía el
+  selector de fecha de "cada N días" en `ScheduleRow.tsx`.
+- **`expo-env.d.ts` está trackeado en git**, aunque el template de Expo lo
+  marca por convención como "generado, no editar". Ese archivo solo lo
+  regenera `npx expo start` (no `expo prebuild`), y sin él `tsc --noEmit`
+  falla al no reconocer `import '../global.css'`. Como este proyecto valida
+  con `tsc` sin depender de tener el dev server corriendo, se optó por
+  trackearlo — su contenido es una sola línea estable y no genera conflictos.
 
 ## Cosas que hay que probar en dispositivo físico (no en emulador)
 

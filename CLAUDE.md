@@ -66,6 +66,24 @@ repository.
   verificación de esta parte tiene que ser en un dispositivo físico — no
   reportes esta funcionalidad como "probada" si solo corriste en emulador.
 
+## Pickers nativos (hora/fecha)
+
+- `@react-native-community/datetimepicker` en Android **siempre** abre como
+  diálogo modal nativo, sin importar el `display` (`default`/`spinner`/etc.).
+  No hay modo embebido real. **No lo envuelvas en un `BottomSheetModal` ni en
+  ningún otro modal propio** — ya se intentó con `TimePickerSheet` y producía
+  dos modales encimados (el diálogo nativo + el sheet). El patrón correcto,
+  usado en `TimePickerSheet.tsx` y en el date-picker de `ScheduleRow.tsx`, es
+  renderizar el `DateTimePicker` condicionalmente (estado `show`/`null`) y
+  aplicar el valor directo en `onValueChange`/`onDismiss` — el diálogo nativo
+  ya trae su propio confirmar/cancelar.
+- Por esta razón `@gorhom/bottom-sheet` **no está instalado** aunque
+  `intrucciones.md` lo mencione en el stack original; si en algún momento se
+  necesita un bottom sheet real para otra cosa (no para hora/fecha), instálalo
+  de nuevo entonces.
+- Usa `onValueChange`/`onDismiss` en vez de `onChange` (está deprecado en esta
+  librería).
+
 ## Reglas de producto que no son obvias por el código
 
 - Marcar "hecho" un recordatorio recurrente **no cancela** su notificación
@@ -92,6 +110,14 @@ repository.
   tiene caché vieja — no es un bug real del código (ver README). `typedRoutes`
   está desactivado en `app.json` a propósito por esto mismo; no lo reactives
   sin regenerar los tipos primero con `npx expo start`.
+- **`expo-env.d.ts` está trackeado en git a propósito** (no lo agregues de
+  vuelta a `.gitignore`). Ese archivo trae `/// <reference types="expo/types" />`,
+  que declara `*.css` como módulo válido para TypeScript — sin él,
+  `import '../global.css'` en `_layout.tsx` no compila. Normalmente lo
+  regenera `npx expo start`, pero **`expo prebuild` no lo toca**, así que si
+  solo corres `prebuild`/`tsc`/tests (como en este flujo), necesitas que ya
+  esté en el repo. Es idempotente: si `expo start` lo vuelve a escribir, el
+  contenido no cambia.
 - Si agregas una dependencia nueva, usa `npx expo install <paquete>` (no `npm
   install` a secas) para que quede en la versión compatible con el SDK. Si da
   conflicto de peer deps con `jest-expo`/`@react-native/jest-preset`, usa

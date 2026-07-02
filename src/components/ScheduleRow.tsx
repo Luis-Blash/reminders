@@ -65,10 +65,11 @@ export function ScheduleRow({ value, onChange, onRemove, onPressTime }: Props) {
               value={parseIsoDate(value.startDate ?? toIsoDate(new Date()))}
               mode="date"
               display="default"
-              onChange={(_, selected) => {
+              onValueChange={(_, selected) => {
                 setShowStartDatePicker(false);
-                if (selected) onChange({ ...value, startDate: toIsoDate(selected) });
+                onChange({ ...value, startDate: toIsoDate(selected) });
               }}
+              onDismiss={() => setShowStartDatePicker(false)}
             />
           )}
         </View>

@@ -9,7 +9,9 @@ node_modules/
 .expo/
 dist/
 web-build/
-expo-env.d.ts
+# expo-env.d.ts NO va aquí: solo se regenera al correr `npx expo start`, no con
+# `prebuild`. Se trackea para que `tsc --noEmit` funcione en un clon fresco o
+# en CI sin depender de haber levantado el dev server antes.
 
 # Native
 .kotlin/
