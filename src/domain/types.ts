@@ -19,6 +19,7 @@ export interface Schedule {
   weekdays: number[] | null; // 0=Dom..6=Sab
   intervalDays: number | null;
   startDate: string | null; // 'YYYY-MM-DD'
+  endDate: string | null; // 'YYYY-MM-DD', tratamiento con límite (ej. "diario por N días")
   enabled: boolean;
   osNotificationIds: string[];
 }
@@ -47,4 +48,5 @@ export interface NewScheduleInput {
   weekdays?: number[] | null;
   intervalDays?: number | null;
   startDate?: string | null;
+  endDate?: string | null;
 }

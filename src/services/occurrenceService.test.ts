@@ -14,6 +14,7 @@ function makeSchedule(overrides: Partial<Schedule>): Schedule {
     weekdays: null,
     intervalDays: null,
     startDate: null,
+    endDate: null,
     enabled: true,
     osNotificationIds: [],
     ...overrides,
@@ -53,6 +54,24 @@ describe('nextOccurrences - daily', () => {
     const from = new Date(2026, 7, 1, 10, 0);
     const result = nextOccurrences(schedule, from, 1);
     expect(result).toEqual([new Date(2026, 7, 1, 20, 0, 0, 0)]);
+  });
+});
+
+describe('nextOccurrences - daily with endDate (tratamiento con límite)', () => {
+  it('stops emitting occurrences after endDate', () => {
+    const schedule = makeSchedule({ repeat: 'daily', hour: 8, minute: 0, endDate: '2026-08-03' });
+    const from = new Date(2026, 7, 1, 10, 0);
+    const result = nextOccurrences(schedule, from, 5);
+    expect(result).toEqual([
+      new Date(2026, 7, 2, 8, 0, 0, 0),
+      new Date(2026, 7, 3, 8, 0, 0, 0),
+    ]);
+  });
+
+  it('returns nothing once "from" is already past endDate', () => {
+    const schedule = makeSchedule({ repeat: 'daily', hour: 8, minute: 0, endDate: '2026-08-03' });
+    const from = new Date(2026, 7, 4, 0, 0);
+    expect(nextOccurrences(schedule, from, 1)).toEqual([]);
   });
 });
 

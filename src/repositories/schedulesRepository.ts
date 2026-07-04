@@ -12,6 +12,7 @@ interface ScheduleRow {
   weekdays: string | null;
   interval_days: number | null;
   start_date: string | null;
+  end_date: string | null;
   enabled: number;
   os_notification_ids: string;
 }
@@ -27,6 +28,7 @@ function toSchedule(row: ScheduleRow): Schedule {
     weekdays: row.weekdays ? JSON.parse(row.weekdays) : null,
     intervalDays: row.interval_days,
     startDate: row.start_date,
+    endDate: row.end_date,
     enabled: row.enabled === 1,
     osNotificationIds: JSON.parse(row.os_notification_ids),
   };
@@ -40,8 +42,8 @@ export async function create(
   const id = newId();
   await db.runAsync(
     `INSERT INTO schedules
-      (id, reminder_id, hour, minute, repeat, once_date, weekdays, interval_days, start_date, enabled, os_notification_ids)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, '[]')`,
+      (id, reminder_id, hour, minute, repeat, once_date, weekdays, interval_days, start_date, end_date, enabled, os_notification_ids)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, '[]')`,
     id,
     reminderId,
     input.hour,
@@ -50,7 +52,8 @@ export async function create(
     input.onceDate ?? null,
     input.weekdays ? JSON.stringify(input.weekdays) : null,
     input.intervalDays ?? null,
-    input.startDate ?? null
+    input.startDate ?? null,
+    input.endDate ?? null
   );
   return {
     id,
@@ -62,6 +65,7 @@ export async function create(
     weekdays: input.weekdays ?? null,
     intervalDays: input.intervalDays ?? null,
     startDate: input.startDate ?? null,
+    endDate: input.endDate ?? null,
     enabled: true,
     osNotificationIds: [],
   };
@@ -97,7 +101,7 @@ export async function update(
 ): Promise<void> {
   const db = await getDb();
   await db.runAsync(
-    `UPDATE schedules SET hour = ?, minute = ?, repeat = ?, once_date = ?, weekdays = ?, interval_days = ?, start_date = ?
+    `UPDATE schedules SET hour = ?, minute = ?, repeat = ?, once_date = ?, weekdays = ?, interval_days = ?, start_date = ?, end_date = ?
      WHERE id = ?`,
     patch.hour,
     patch.minute,
@@ -106,6 +110,7 @@ export async function update(
     patch.weekdays ? JSON.stringify(patch.weekdays) : null,
     patch.intervalDays ?? null,
     patch.startDate ?? null,
+    patch.endDate ?? null,
     id
   );
 }
@@ -141,8 +146,8 @@ export async function insertRaw(schedule: Schedule): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT INTO schedules
-      (id, reminder_id, hour, minute, repeat, once_date, weekdays, interval_days, start_date, enabled, os_notification_ids)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]')`,
+      (id, reminder_id, hour, minute, repeat, once_date, weekdays, interval_days, start_date, end_date, enabled, os_notification_ids)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]')`,
     schedule.id,
     schedule.reminderId,
     schedule.hour,
@@ -152,6 +157,7 @@ export async function insertRaw(schedule: Schedule): Promise<void> {
     schedule.weekdays ? JSON.stringify(schedule.weekdays) : null,
     schedule.intervalDays,
     schedule.startDate,
+    schedule.endDate,
     schedule.enabled ? 1 : 0
   );
 }

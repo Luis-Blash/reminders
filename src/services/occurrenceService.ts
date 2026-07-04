@@ -1,4 +1,4 @@
-import { addDays, isAfter, startOfDay } from 'date-fns';
+import { addDays, endOfDay, isAfter, startOfDay } from 'date-fns';
 
 import type { Schedule } from '@/domain/types';
 import { atTime, parseIsoDate } from '@/utils/date';
@@ -29,18 +29,30 @@ export function occurrencesInRange(schedule: Schedule, rangeStart: Date, rangeEn
 export function nextOccurrences(schedule: Schedule, from: Date, count: number): Date[] {
   if (count <= 0) return [];
 
+  let occurrences: Date[];
   switch (schedule.repeat) {
     case 'once':
-      return nextOnceOccurrences(schedule, from);
+      occurrences = nextOnceOccurrences(schedule, from);
+      break;
     case 'daily':
-      return nextDailyOccurrences(schedule, from, count);
+      occurrences = nextDailyOccurrences(schedule, from, count);
+      break;
     case 'weekly':
-      return nextWeeklyOccurrences(schedule, from, count);
+      occurrences = nextWeeklyOccurrences(schedule, from, count);
+      break;
     case 'custom':
-      return nextCustomOccurrences(schedule, from, count);
+      occurrences = nextCustomOccurrences(schedule, from, count);
+      break;
     default:
-      return [];
+      occurrences = [];
   }
+
+  if (schedule.endDate) {
+    const limit = endOfDay(parseIsoDate(schedule.endDate));
+    occurrences = occurrences.filter((occurrence) => !isAfter(occurrence, limit));
+  }
+
+  return occurrences;
 }
 
 function nextOnceOccurrences(schedule: Schedule, from: Date): Date[] {

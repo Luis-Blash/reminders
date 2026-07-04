@@ -1,9 +1,10 @@
+import { isAfter, isBefore, startOfDay } from 'date-fns';
 import { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import type { ScheduleFormInput } from '@/services/reminderService';
 import { newId } from '@/utils/id';
-import { toIsoDate } from '@/utils/date';
+import { atTime, parseIsoDate, toIsoDate } from '@/utils/date';
 
 import { ScheduleRow } from './ScheduleRow';
 import { TimePickerSheet, type TimePickerSheetHandle } from './TimePickerSheet';
@@ -33,6 +34,7 @@ function defaultSchedule(): RowState {
     hour: now.getHours(),
     minute: now.getMinutes(),
     repeat: 'once',
+    onceDate: toIsoDate(now),
     weekdays: [],
     intervalDays: 2,
     startDate: toIsoDate(now),
@@ -73,6 +75,19 @@ export function ReminderForm({ initialTitle, initialNotes, initialSchedules, sub
       if (schedule.repeat === 'custom' && (!schedule.intervalDays || schedule.intervalDays < 1)) {
         return 'Define cada cuántos días se repite';
       }
+      if (schedule.repeat === 'once') {
+        const onceDate = schedule.onceDate ? parseIsoDate(schedule.onceDate) : new Date();
+        if (!isAfter(atTime(onceDate, schedule.hour, schedule.minute), new Date())) {
+          return 'La fecha de "Una vez" ya pasó';
+        }
+      }
+      if (
+        schedule.repeat === 'daily' &&
+        schedule.endDate &&
+        isBefore(parseIsoDate(schedule.endDate), startOfDay(new Date()))
+      ) {
+        return 'La fecha de término ya pasó';
+      }
     }
     return null;
   }
@@ -88,7 +103,7 @@ export function ReminderForm({ initialTitle, initialNotes, initialSchedules, sub
     try {
       const preparedSchedules: ScheduleFormInput[] = schedules.map(({ key, ...rest }) => ({
         ...rest,
-        onceDate: rest.repeat === 'once' ? toIsoDate(new Date()) : rest.onceDate,
+        onceDate: rest.repeat === 'once' ? rest.onceDate ?? toIsoDate(new Date()) : rest.onceDate,
         startDate: rest.repeat === 'custom' ? rest.startDate ?? toIsoDate(new Date()) : rest.startDate,
       }));
       await onSubmit({ title: title.trim(), notes: notes.trim() || null, schedules: preparedSchedules });

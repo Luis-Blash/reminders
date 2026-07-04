@@ -13,6 +13,7 @@ function makeSchedule(overrides: Partial<Schedule>): Schedule {
     weekdays: null,
     intervalDays: null,
     startDate: null,
+    endDate: null,
     enabled: true,
     osNotificationIds: [],
     ...overrides,

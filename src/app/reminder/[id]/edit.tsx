@@ -44,10 +44,11 @@ export default function EditReminder() {
           weekdays: s.weekdays,
           intervalDays: s.intervalDays,
           startDate: s.startDate,
+          endDate: s.endDate,
         }))}
         onSubmit={async ({ title, notes, schedules }) => {
           await reminderService.updateReminder(reminder.id, { title, notes }, schedules);
-          router.replace(`/reminder/${reminder.id}`);
+          router.dismissAll();
         }}
       />
     </SafeAreaView>

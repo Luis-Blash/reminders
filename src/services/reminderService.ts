@@ -1,11 +1,13 @@
+import { endOfDay, startOfDay } from 'date-fns';
+
 import { hasFutureOccurrences } from '@/domain/repeat';
 import type { NewReminderInput, NewScheduleInput, ReminderWithSchedules } from '@/domain/types';
 import * as completionsRepository from '@/repositories/completionsRepository';
 import * as remindersRepository from '@/repositories/remindersRepository';
 import * as schedulesRepository from '@/repositories/schedulesRepository';
-import { toIsoDate } from '@/utils/date';
+import { parseIsoDate, toIsoDate } from '@/utils/date';
 
-import { occurrencesInRange } from './occurrenceService';
+import { nextOccurrences, occurrencesInRange } from './occurrenceService';
 import { cancelAllForReminder, cancelScheduleNotifications, rebuildScheduleNotifications } from './schedulerService';
 
 export interface ReminderListItem extends ReminderWithSchedules {
@@ -33,10 +35,52 @@ async function toListItem(reminderId: string): Promise<ReminderListItem | null> 
   return { ...reminder, schedules, doneToday };
 }
 
+/** Próxima ocurrencia (fecha+hora real) de cualquier schedule habilitado, no solo la hora del día. */
+function earliestUpcomingOccurrence(item: ReminderListItem, from: Date): number {
+  let earliest = Infinity;
+  for (const schedule of item.schedules) {
+    if (!schedule.enabled) continue;
+    const [occurrence] = nextOccurrences(schedule, from, 1);
+    if (occurrence && occurrence.getTime() < earliest) earliest = occurrence.getTime();
+  }
+  return earliest;
+}
+
+/** Ocurrencia más temprana de cualquier schedule habilitado dentro del rango dado. */
+function earliestOccurrenceInRange(item: ReminderListItem, rangeStart: Date, rangeEnd: Date): number {
+  let earliest = Infinity;
+  for (const schedule of item.schedules) {
+    if (!schedule.enabled) continue;
+    const [occurrence] = occurrencesInRange(schedule, rangeStart, rangeEnd);
+    if (occurrence && occurrence.getTime() < earliest) earliest = occurrence.getTime();
+  }
+  return earliest;
+}
+
 export async function listReminders(): Promise<ReminderListItem[]> {
   const reminders = await remindersRepository.getAll();
   const items = await Promise.all(reminders.map((reminder) => toListItem(reminder.id)));
-  return items.filter((item): item is ReminderListItem => item !== null);
+  const list = items.filter((item): item is ReminderListItem => item !== null);
+  const now = new Date();
+  return list.sort((a, b) => earliestUpcomingOccurrence(a, now) - earliestUpcomingOccurrence(b, now));
+}
+
+/** Recordatorios con al menos una ocurrencia habilitada en la fecha dada, ordenados por horario de ese día. */
+export async function listRemindersForDate(dateIso: string): Promise<ReminderListItem[]> {
+  const date = parseIsoDate(dateIso);
+  const rangeStart = startOfDay(date);
+  const rangeEnd = endOfDay(date);
+  const reminders = await listReminders();
+  return reminders
+    .filter((reminder) =>
+      reminder.schedules.some(
+        (schedule) => schedule.enabled && occurrencesInRange(schedule, rangeStart, rangeEnd).length > 0
+      )
+    )
+    .sort(
+      (a, b) =>
+        earliestOccurrenceInRange(a, rangeStart, rangeEnd) - earliestOccurrenceInRange(b, rangeStart, rangeEnd)
+    );
 }
 
 export async function getReminder(id: string): Promise<ReminderListItem | null> {

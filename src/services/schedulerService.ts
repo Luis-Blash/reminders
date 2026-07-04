@@ -39,6 +39,12 @@ async function scheduleOnce(reminder: ReminderContent, schedule: Schedule): Prom
 }
 
 async function scheduleDaily(reminder: ReminderContent, schedule: Schedule): Promise<string[]> {
+  // Un "diario" con endDate (tratamiento con límite) no puede usar el trigger nativo
+  // DAILY porque es infinito y seguiría sonando tras terminar el tratamiento; se
+  // pre-agenda como fechas discretas igual que "custom", ver scheduleCustom.
+  if (schedule.endDate) {
+    return scheduleCustom(reminder, schedule);
+  }
   const id = await scheduleNotification(reminder, schedule, {
     type: SchedulableTriggerInputTypes.DAILY,
     hour: schedule.hour,
@@ -124,10 +130,15 @@ export async function cancelAllForReminder(schedules: Schedule[]): Promise<void>
   await Promise.all(schedules.map((schedule) => cancelIds(schedule.osNotificationIds)));
 }
 
+function isFiniteSchedule(schedule: Schedule): boolean {
+  return schedule.repeat === 'custom' || (schedule.repeat === 'daily' && !!schedule.endDate);
+}
+
 /**
- * Rehydrates custom ("cada N días") schedules: since expo has no native recurring
- * trigger for that rule, occurrences are pre-scheduled up to CUSTOM_HORIZON. Call
- * this on app start and on AppState -> active to top up the ones already consumed.
+ * Rehydrates "finite" schedules — custom ("cada N días") and daily-with-endDate
+ * (tratamiento con límite) — since expo has no native recurring trigger for either,
+ * occurrences are pre-scheduled up to CUSTOM_HORIZON. Call this on app start and on
+ * AppState -> active to top up the ones already consumed.
  */
 export async function topUpCustomSchedules(): Promise<void> {
   const [reminders, schedules] = await Promise.all([
@@ -137,10 +148,11 @@ export async function topUpCustomSchedules(): Promise<void> {
   const reminderById = new Map(reminders.map((reminder) => [reminder.id, reminder]));
 
   for (const schedule of schedules) {
-    if (schedule.repeat !== 'custom' || !schedule.enabled) continue;
+    if (!isFiniteSchedule(schedule) || !schedule.enabled) continue;
     const reminder = reminderById.get(schedule.reminderId);
     if (!reminder || !reminder.active) continue;
-    if (schedule.osNotificationIds.length < CUSTOM_HORIZON) {
+    const pendingOccurrences = nextOccurrences(schedule, new Date(), CUSTOM_HORIZON);
+    if (pendingOccurrences.length > schedule.osNotificationIds.length) {
       await rebuildScheduleNotifications(reminder, schedule);
     }
   }

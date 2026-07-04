@@ -44,6 +44,12 @@ const migrations: Migration[] = [
       CREATE INDEX idx_completions_reminder_id ON completions(reminder_id);
     `,
   },
+  {
+    version: 2,
+    up: `
+      ALTER TABLE schedules ADD COLUMN end_date TEXT;
+    `,
+  },
 ];
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {

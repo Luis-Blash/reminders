@@ -22,8 +22,8 @@ export default function NewReminder() {
       <ReminderForm
         submitLabel="Guardar"
         onSubmit={async ({ title, notes, schedules }) => {
-          const id = await reminderService.createReminder({ title, notes }, schedules);
-          router.replace(`/reminder/${id}`);
+          await reminderService.createReminder({ title, notes }, schedules);
+          router.dismissAll();
         }}
       />
     </SafeAreaView>

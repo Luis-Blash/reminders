@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, FlatList, Pressable, Text, View } from 'react-native';
@@ -10,6 +11,7 @@ import { ReminderCard } from '@/components/ReminderCard';
 import * as reminderService from '@/services/reminderService';
 import type { ReminderListItem } from '@/services/reminderService';
 import { colors } from '@/theme/tokens';
+import { parseIsoDate, toIsoDate } from '@/utils/date';
 import { hasCompletedOnboarding } from '@/utils/onboarding';
 
 type Filter = 'todos' | 'pendientes' | 'hechos';
@@ -19,6 +21,8 @@ export default function Home() {
   const [reminders, setReminders] = useState<ReminderListItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [filter, setFilter] = useState<Filter>('todos');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const load = useCallback(async () => {
     const seenOnboarding = await hasCompletedOnboarding();
@@ -26,10 +30,12 @@ export default function Home() {
       router.replace('/onboarding');
       return;
     }
-    const items = await reminderService.listReminders();
+    const items = selectedDate
+      ? await reminderService.listRemindersForDate(selectedDate)
+      : await reminderService.listReminders();
     setReminders(items);
     setLoaded(true);
-  }, [router]);
+  }, [router, selectedDate]);
 
   useFocusEffect(
     useCallback(() => {
@@ -72,8 +78,8 @@ export default function Home() {
         </Pressable>
       </View>
 
-      {loaded && reminders.length > 0 && (
-        <View className="flex-row gap-2 px-5 pb-2">
+      {loaded && (reminders.length > 0 || selectedDate) && (
+        <View className="flex-row flex-wrap gap-2 px-5 pb-2">
           {(
             [
               { key: 'todos', label: 'Todos' },
@@ -97,7 +103,41 @@ export default function Home() {
               </Text>
             </Pressable>
           ))}
+
+          <Pressable
+            onPress={() => setShowDatePicker(true)}
+            className={`flex-row items-center gap-1 rounded-full px-3 py-1.5 ${
+              selectedDate ? 'bg-primary' : 'bg-surface'
+            }`}
+          >
+            <Ionicons name="calendar-outline" size={14} color={selectedDate ? colors.surface : colors.navy} />
+            <Text className={`text-sm font-medium ${selectedDate ? 'text-surface' : 'text-navy'}`}>
+              {selectedDate ?? 'Fecha'}
+            </Text>
+          </Pressable>
+          {selectedDate && (
+            <Pressable
+              onPress={() => setSelectedDate(null)}
+              className="items-center justify-center rounded-full bg-surface px-2 py-1.5"
+              hitSlop={8}
+            >
+              <Ionicons name="close" size={16} color={colors.navy} />
+            </Pressable>
+          )}
         </View>
+      )}
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate ? parseIsoDate(selectedDate) : new Date()}
+          mode="date"
+          display="default"
+          onValueChange={(_, selected) => {
+            setShowDatePicker(false);
+            if (selected) setSelectedDate(toIsoDate(selected));
+          }}
+          onDismiss={() => setShowDatePicker(false)}
+        />
       )}
 
       {loaded && reminders.length === 0 ? (

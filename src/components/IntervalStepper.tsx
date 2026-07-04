@@ -5,15 +5,17 @@ export function IntervalStepper({
   onChange,
   min = 2,
   max = 365,
+  label = 'Repetir cada',
 }: {
   value: number;
   onChange: (value: number) => void;
   min?: number;
   max?: number;
+  label?: string;
 }) {
   return (
     <View className="flex-row items-center justify-between rounded-control bg-mint px-4 py-3">
-      <Text className="text-sm text-navy">Repetir cada</Text>
+      <Text className="text-sm text-navy">{label}</Text>
       <View className="flex-row items-center gap-4">
         <Pressable
           onPress={() => onChange(Math.max(min, value - 1))}
