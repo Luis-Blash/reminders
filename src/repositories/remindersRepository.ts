@@ -85,3 +85,24 @@ export async function remove(id: string): Promise<void> {
   const db = await getDb();
   await db.runAsync('DELETE FROM reminders WHERE id = ?', id);
 }
+
+/** Borra todos los reminders (cascada limpia schedules y completions). Usado al restaurar un backup. */
+export async function removeAll(): Promise<void> {
+  const db = await getDb();
+  await db.runAsync('DELETE FROM reminders');
+}
+
+/** Inserta una fila de reminder tal cual (preserva id/fechas). Usado al restaurar un backup. */
+export async function insertRaw(reminder: Reminder): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO reminders (id, title, notes, active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    reminder.id,
+    reminder.title,
+    reminder.notes,
+    reminder.active ? 1 : 0,
+    reminder.createdAt,
+    reminder.updatedAt
+  );
+}

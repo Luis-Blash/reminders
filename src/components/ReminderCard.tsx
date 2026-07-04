@@ -13,7 +13,8 @@ interface Props {
 }
 
 export function ReminderCard({ reminder, onPress, onToggleDone }: Props) {
-  const finished = reminder.doneToday || !reminder.active;
+  const autoFinished = !reminder.active && !reminder.doneToday;
+  const finished = reminder.doneToday || autoFinished;
 
   return (
     <Pressable
@@ -31,10 +32,15 @@ export function ReminderCard({ reminder, onPress, onToggleDone }: Props) {
           disabled={!reminder.active}
           hitSlop={8}
           className={`h-7 w-7 items-center justify-center rounded-full ${
-            reminder.doneToday ? 'bg-primary' : 'border-2 border-gray/40'
+            reminder.doneToday
+              ? 'bg-primary'
+              : autoFinished
+                ? 'bg-gray/30'
+                : 'border-2 border-gray/40'
           }`}
         >
           {reminder.doneToday && <Ionicons name="checkmark" size={16} color={colors.surface} />}
+          {autoFinished && <Ionicons name="flag" size={14} color={colors.gray} />}
         </Pressable>
       </View>
 

@@ -3,6 +3,29 @@ import { addDays, isAfter, startOfDay } from 'date-fns';
 import type { Schedule } from '@/domain/types';
 import { atTime, parseIsoDate } from '@/utils/date';
 
+const RANGE_BATCH_SIZE = 50;
+const RANGE_MAX_BATCHES = 40;
+
+export function occurrencesInRange(schedule: Schedule, rangeStart: Date, rangeEnd: Date): Date[] {
+  const occurrences: Date[] = [];
+  let from = rangeStart;
+
+  for (let batch = 0; batch < RANGE_MAX_BATCHES; batch += 1) {
+    const next = nextOccurrences(schedule, from, RANGE_BATCH_SIZE);
+    if (next.length === 0) break;
+
+    for (const occurrence of next) {
+      if (isAfter(occurrence, rangeEnd)) return occurrences;
+      occurrences.push(occurrence);
+    }
+
+    if (next.length < RANGE_BATCH_SIZE) break;
+    from = next[next.length - 1];
+  }
+
+  return occurrences;
+}
+
 export function nextOccurrences(schedule: Schedule, from: Date, count: number): Date[] {
   if (count <= 0) return [];
 

@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 import type { Schedule } from '@/domain/types';
 
-import { nextOccurrences } from './occurrenceService';
+import { nextOccurrences, occurrencesInRange } from './occurrenceService';
 
 function makeSchedule(overrides: Partial<Schedule>): Schedule {
   return {
@@ -83,5 +83,56 @@ describe('nextOccurrences - custom (every N days, crossing months)', () => {
       new Date(2026, 7, 14, 12, 0, 0, 0), // 2026-08-14
       new Date(2026, 7, 24, 12, 0, 0, 0), // 2026-08-24
     ]);
+  });
+});
+
+describe('occurrencesInRange', () => {
+  it('includes the start-date occurrence itself for custom (every N days)', () => {
+    const schedule = makeSchedule({
+      repeat: 'custom',
+      intervalDays: 2,
+      startDate: '2026-07-06',
+      hour: 9,
+      minute: 0,
+    });
+    const rangeStart = new Date(2026, 6, 1, 0, 0);
+    const rangeEnd = new Date(2026, 6, 12, 23, 59, 59);
+    const result = occurrencesInRange(schedule, rangeStart, rangeEnd);
+    expect(result).toEqual([
+      new Date(2026, 6, 6, 9, 0, 0, 0),
+      new Date(2026, 6, 8, 9, 0, 0, 0),
+      new Date(2026, 6, 10, 9, 0, 0, 0),
+      new Date(2026, 6, 12, 9, 0, 0, 0),
+    ]);
+  });
+
+  it('stops exactly at the range end and does not include later occurrences', () => {
+    const schedule = makeSchedule({ repeat: 'daily', hour: 8, minute: 0 });
+    const rangeStart = new Date(2026, 7, 1, 0, 0);
+    const rangeEnd = new Date(2026, 7, 3, 23, 59, 59);
+    const result = occurrencesInRange(schedule, rangeStart, rangeEnd);
+    expect(result).toEqual([
+      new Date(2026, 7, 1, 8, 0, 0, 0),
+      new Date(2026, 7, 2, 8, 0, 0, 0),
+      new Date(2026, 7, 3, 8, 0, 0, 0),
+    ]);
+  });
+
+  it('returns occurrences for a weekly schedule crossing a month boundary', () => {
+    // 2026-08-01 is a Saturday. Selecting Mon(1) only, range spans into September.
+    const schedule = makeSchedule({ repeat: 'weekly', weekdays: [1], hour: 7, minute: 0 });
+    const rangeStart = new Date(2026, 7, 1, 0, 0);
+    const rangeEnd = new Date(2026, 8, 2, 23, 59, 59);
+    const result = occurrencesInRange(schedule, rangeStart, rangeEnd);
+    expect(result.map((d) => d.getDay())).toEqual(result.map(() => 1));
+    expect(result[0]).toEqual(new Date(2026, 7, 3, 7, 0, 0, 0));
+    expect(result[result.length - 1]).toEqual(new Date(2026, 7, 31, 7, 0, 0, 0));
+  });
+
+  it('returns empty when the once occurrence falls outside the range', () => {
+    const schedule = makeSchedule({ repeat: 'once', onceDate: '2026-12-25', hour: 9, minute: 0 });
+    const rangeStart = new Date(2026, 7, 1, 0, 0);
+    const rangeEnd = new Date(2026, 7, 31, 23, 59, 59);
+    expect(occurrencesInRange(schedule, rangeStart, rangeEnd)).toEqual([]);
   });
 });

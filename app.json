@@ -45,7 +45,8 @@
         {
           "color": "#35B36A"
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "reactCompiler": true

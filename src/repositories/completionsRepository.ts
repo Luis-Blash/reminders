@@ -71,3 +71,22 @@ export async function getByDate(occurrenceDate: string): Promise<Completion[]> {
   );
   return rows.map(toCompletion);
 }
+
+export async function getAll(): Promise<Completion[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<CompletionRow>('SELECT * FROM completions');
+  return rows.map(toCompletion);
+}
+
+/** Inserta una fila de completion tal cual (preserva id/reminder_id). Usado al restaurar un backup. */
+export async function insertRaw(completion: Completion): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT OR IGNORE INTO completions (id, reminder_id, occurrence_date, completed_at)
+     VALUES (?, ?, ?, ?)`,
+    completion.id,
+    completion.reminderId,
+    completion.occurrenceDate,
+    completion.completedAt
+  );
+}

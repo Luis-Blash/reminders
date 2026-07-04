@@ -12,10 +12,13 @@ import type { ReminderListItem } from '@/services/reminderService';
 import { colors } from '@/theme/tokens';
 import { hasCompletedOnboarding } from '@/utils/onboarding';
 
+type Filter = 'todos' | 'pendientes' | 'hechos';
+
 export default function Home() {
   const router = useRouter();
   const [reminders, setReminders] = useState<ReminderListItem[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [filter, setFilter] = useState<Filter>('todos');
 
   const load = useCallback(async () => {
     const seenOnboarding = await hasCompletedOnboarding();
@@ -36,6 +39,12 @@ export default function Home() {
 
   const pendingCount = reminders.filter((r) => r.active && !r.doneToday).length;
   const doneCount = reminders.filter((r) => r.doneToday || !r.active).length;
+
+  const visibleReminders = reminders.filter((r) => {
+    if (filter === 'pendientes') return r.active && !r.doneToday;
+    if (filter === 'hechos') return r.doneToday || !r.active;
+    return true;
+  });
 
   async function handleToggleDone(reminder: ReminderListItem) {
     if (reminder.doneToday || !reminder.active) return;
@@ -63,11 +72,39 @@ export default function Home() {
         </Pressable>
       </View>
 
+      {loaded && reminders.length > 0 && (
+        <View className="flex-row gap-2 px-5 pb-2">
+          {(
+            [
+              { key: 'todos', label: 'Todos' },
+              { key: 'pendientes', label: 'Pendientes' },
+              { key: 'hechos', label: 'Hechos' },
+            ] as const
+          ).map(({ key, label }) => (
+            <Pressable
+              key={key}
+              onPress={() => setFilter(key)}
+              className={`rounded-full px-3 py-1.5 ${
+                filter === key ? 'bg-primary' : 'bg-surface'
+              }`}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  filter === key ? 'text-surface' : 'text-navy'
+                }`}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       {loaded && reminders.length === 0 ? (
         <EmptyState onCreate={() => router.push('/reminder/new')} />
       ) : (
         <FlatList
-          data={reminders}
+          data={visibleReminders}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-24 pt-2"
           renderItem={({ item }) => (

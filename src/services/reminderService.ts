@@ -5,10 +5,16 @@ import * as remindersRepository from '@/repositories/remindersRepository';
 import * as schedulesRepository from '@/repositories/schedulesRepository';
 import { toIsoDate } from '@/utils/date';
 
+import { occurrencesInRange } from './occurrenceService';
 import { cancelAllForReminder, cancelScheduleNotifications, rebuildScheduleNotifications } from './schedulerService';
 
 export interface ReminderListItem extends ReminderWithSchedules {
   doneToday: boolean;
+}
+
+export interface CalendarMark {
+  date: string; // 'YYYY-MM-DD'
+  reminders: { id: string; title: string; hour: number; minute: number }[];
 }
 
 export interface ScheduleFormInput extends NewScheduleInput {
@@ -119,6 +125,36 @@ async function refreshActiveFlag(reminderId: string): Promise<void> {
   if (!reminder) return;
   const stillHasFuture = hasFutureOccurrences(reminder);
   await remindersRepository.setActive(reminderId, stillHasFuture);
+}
+
+/** Junta las ocurrencias futuras de todos los recordatorios activos en un rango de fechas, agrupadas por día. */
+export async function getCalendarMarks(
+  rangeStart: Date,
+  rangeEnd: Date
+): Promise<Map<string, CalendarMark>> {
+  const reminders = await listReminders();
+  const marks = new Map<string, CalendarMark>();
+
+  for (const reminder of reminders) {
+    if (!reminder.active) continue;
+    for (const schedule of reminder.schedules) {
+      if (!schedule.enabled) continue;
+      const occurrences = occurrencesInRange(schedule, rangeStart, rangeEnd);
+      for (const occurrence of occurrences) {
+        const dateKey = toIsoDate(occurrence);
+        const mark = marks.get(dateKey) ?? { date: dateKey, reminders: [] };
+        mark.reminders.push({
+          id: reminder.id,
+          title: reminder.title,
+          hour: schedule.hour,
+          minute: schedule.minute,
+        });
+        marks.set(dateKey, mark);
+      }
+    }
+  }
+
+  return marks;
 }
 
 /** Finaliza recordatorios que ya dispararon su última ocurrencia sin que el usuario los marque a mano. */

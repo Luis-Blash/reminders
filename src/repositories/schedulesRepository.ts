@@ -131,3 +131,27 @@ export async function remove(id: string): Promise<void> {
   const db = await getDb();
   await db.runAsync('DELETE FROM schedules WHERE id = ?', id);
 }
+
+/**
+ * Inserta una fila de schedule tal cual (preserva id/reminder_id), pero siempre con
+ * os_notification_ids = '[]': los IDs de notificación son del dispositivo viejo y no
+ * sirven tras restaurar un backup — hay que re-agendar aparte.
+ */
+export async function insertRaw(schedule: Schedule): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO schedules
+      (id, reminder_id, hour, minute, repeat, once_date, weekdays, interval_days, start_date, enabled, os_notification_ids)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]')`,
+    schedule.id,
+    schedule.reminderId,
+    schedule.hour,
+    schedule.minute,
+    schedule.repeat,
+    schedule.onceDate,
+    schedule.weekdays ? JSON.stringify(schedule.weekdays) : null,
+    schedule.intervalDays,
+    schedule.startDate,
+    schedule.enabled ? 1 : 0
+  );
+}
