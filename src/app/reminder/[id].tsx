@@ -41,6 +41,21 @@ export default function ReminderDetail() {
     }
   }
 
+  async function handleReactivate() {
+    try {
+      const { active } = await reminderService.reactivateReminder(reminder!.id);
+      load();
+      if (!active) {
+        Alert.alert(
+          'Sin fechas futuras',
+          'Este recordatorio ya no tiene fechas futuras. Edítalo para cambiar la fecha u horario.'
+        );
+      }
+    } catch {
+      Alert.alert('Error', 'No se pudo reactivar el recordatorio. Intenta de nuevo.');
+    }
+  }
+
   function handleDelete() {
     Alert.alert('Eliminar recordatorio', '¿Seguro que quieres eliminarlo? Esta acción no se puede deshacer.', [
       { text: 'Cancelar', style: 'cancel' },
@@ -79,15 +94,15 @@ export default function ReminderDetail() {
           ))}
         </View>
 
-        <Pressable
-          onPress={handleMarkDone}
-          disabled={finished}
-          className={`mt-8 items-center rounded-full py-3.5 ${finished ? 'bg-primary/40' : 'bg-primary'}`}
-        >
-          <Text className="font-semibold text-surface">
-            {finished ? 'Hecho' : 'Marcar como hecho'}
-          </Text>
-        </Pressable>
+        {finished ? (
+          <Pressable onPress={handleReactivate} className="mt-8 items-center rounded-full bg-primary py-3.5">
+            <Text className="font-semibold text-surface">Reactivar</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={handleMarkDone} className="mt-8 items-center rounded-full bg-primary py-3.5">
+            <Text className="font-semibold text-surface">Marcar como hecho</Text>
+          </Pressable>
+        )}
 
         <Pressable
           onPress={() => router.push(`/reminder/${reminder.id}/edit`)}

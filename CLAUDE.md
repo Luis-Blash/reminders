@@ -86,9 +86,11 @@ repository.
 
 ## Reglas de producto que no son obvias por el código
 
-- Marcar "hecho" un recordatorio recurrente **no cancela** su notificación
-  nativa — solo inserta una fila en `completions` para el día de hoy. La
-  notificación de mañana sigue viva.
+- Marcar "hecho" (`reminderService.markDoneToday`) **cancela todas** las
+  notificaciones del recordatorio (todos sus schedules, sin importar el tipo) y
+  lo deja finalizado (`active = 0`) — es como archivarlo, ya no vuelve a sonar.
+  Se revierte con "Reactivar" (`reminderService.reactivateReminder`), que quita
+  el "hecho" de hoy y re-agenda las notificaciones.
 - Un `reminder` pasa a `active = 0` cuando ninguno de sus `schedules`
   habilitados tiene ocurrencias futuras (`hasFutureOccurrences` en
   `domain/repeat.ts`), no cuando el usuario lo marca como hecho directamente.

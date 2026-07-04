@@ -159,9 +159,33 @@ export async function setScheduleEnabled(scheduleId: string, enabled: boolean): 
   await refreshActiveFlag(reminder.id);
 }
 
+/** Marca "hecho" y cancela sus notificaciones: el recordatorio queda finalizado y no vuelve a sonar hasta reactivarlo. */
 export async function markDoneToday(reminderId: string): Promise<void> {
   await completionsRepository.markDone(reminderId, todayIso());
-  await refreshActiveFlag(reminderId);
+  const schedules = await schedulesRepository.getByReminderId(reminderId);
+  for (const schedule of schedules) {
+    await cancelScheduleNotifications(schedule);
+  }
+  await remindersRepository.setActive(reminderId, false);
+}
+
+/** Reversa de markDoneToday: quita el "hecho" de hoy y re-agenda las notificaciones. */
+export async function reactivateReminder(id: string): Promise<{ active: boolean }> {
+  const reminder = await remindersRepository.getById(id);
+  if (!reminder) return { active: false };
+
+  await completionsRepository.unmarkDone(id, todayIso());
+  await remindersRepository.setActive(id, true);
+
+  const schedules = await schedulesRepository.getByReminderId(id);
+  for (const schedule of schedules) {
+    if (!schedule.enabled) continue;
+    await rebuildScheduleNotifications(reminder, schedule);
+  }
+
+  await refreshActiveFlag(id);
+  const updated = await remindersRepository.getById(id);
+  return { active: updated?.active ?? false };
 }
 
 async function refreshActiveFlag(reminderId: string): Promise<void> {

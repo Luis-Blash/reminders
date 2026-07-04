@@ -2,12 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, SectionList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
 import { Fab } from '@/components/Fab';
 import { ReminderCard } from '@/components/ReminderCard';
+import type { RepeatRule } from '@/domain/types';
 import * as reminderService from '@/services/reminderService';
 import type { ReminderListItem } from '@/services/reminderService';
 import { colors } from '@/theme/tokens';
@@ -15,6 +16,20 @@ import { parseIsoDate, toIsoDate } from '@/utils/date';
 import { hasCompletedOnboarding } from '@/utils/onboarding';
 
 type Filter = 'todos' | 'pendientes' | 'hechos';
+
+const REPEAT_SECTIONS: { key: RepeatRule; title: string }[] = [
+  { key: 'once', title: 'Una vez' },
+  { key: 'daily', title: 'Diario' },
+  { key: 'weekly', title: 'Semanal' },
+  { key: 'custom', title: 'Cada N días' },
+];
+
+function groupByRepeat(items: ReminderListItem[]): { title: string; data: ReminderListItem[] }[] {
+  return REPEAT_SECTIONS.map(({ key, title }) => ({
+    title,
+    data: items.filter((item) => (item.schedules[0]?.repeat ?? 'once') === key),
+  })).filter((section) => section.data.length > 0);
+}
 
 export default function Home() {
   const router = useRouter();
@@ -143,10 +158,14 @@ export default function Home() {
       {loaded && reminders.length === 0 ? (
         <EmptyState onCreate={() => router.push('/reminder/new')} />
       ) : (
-        <FlatList
-          data={visibleReminders}
+        <SectionList
+          sections={groupByRepeat(visibleReminders)}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-24 pt-2"
+          stickySectionHeadersEnabled={false}
+          renderSectionHeader={({ section }) => (
+            <Text className="mb-2 mt-2 text-xs font-semibold uppercase text-gray">{section.title}</Text>
+          )}
           renderItem={({ item }) => (
             <ReminderCard
               reminder={item}

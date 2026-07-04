@@ -41,6 +41,18 @@ export async function markDone(
   return toCompletion(row!);
 }
 
+export async function unmarkDone(
+  reminderId: string,
+  occurrenceDate: string
+): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    'DELETE FROM completions WHERE reminder_id = ? AND occurrence_date = ?',
+    reminderId,
+    occurrenceDate
+  );
+}
+
 export async function isDoneOn(
   reminderId: string,
   occurrenceDate: string
