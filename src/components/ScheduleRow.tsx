@@ -116,8 +116,9 @@ export function ScheduleRow({ value, onChange, onRemove, onPressTime }: Props) {
             onChange={(intervalDays) => onChange({ ...value, intervalDays })}
           />
           <Text className="px-1 text-xs text-gray">
-            Por ejemplo, cada {value.intervalDays ?? 2} días: hoy, luego en{' '}
-            {value.intervalDays ?? 2} días, luego en {(value.intervalDays ?? 2) * 2} días...
+            Por ejemplo, cada {value.intervalDays ?? 2} {(value.intervalDays ?? 2) === 1 ? 'día' : 'días'}: hoy,
+            luego en {value.intervalDays ?? 2} {(value.intervalDays ?? 2) === 1 ? 'día' : 'días'}, luego en{' '}
+            {(value.intervalDays ?? 2) * 2} días...
           </Text>
           <Pressable
             onPress={() => setShowStartDatePicker(true)}

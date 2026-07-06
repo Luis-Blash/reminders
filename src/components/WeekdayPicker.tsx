@@ -25,6 +25,7 @@ export function WeekdayPicker({
           <Pressable
             key={day}
             onPress={() => toggle(day)}
+            hitSlop={6}
             className={`h-9 w-9 items-center justify-center rounded-full ${
               selected ? 'bg-primary' : 'bg-mint'
             }`}

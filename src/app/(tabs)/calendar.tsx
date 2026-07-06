@@ -55,7 +55,7 @@ export default function CalendarScreen() {
         <View className="mt-4">
           <Text className="mb-2 text-sm font-semibold text-navy">
             {selectedMark && selectedMark.reminders.length > 0
-              ? `${selectedMark.reminders.length} recordatorio(s)`
+              ? `${selectedMark.reminders.length} ${selectedMark.reminders.length === 1 ? 'recordatorio' : 'recordatorios'}`
               : 'Sin recordatorios este día'}
           </Text>
           {selectedMark?.reminders.map((r, i) => (

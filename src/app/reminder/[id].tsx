@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScheduleChip } from '@/components/ScheduleChip';
@@ -27,7 +27,11 @@ export default function ReminderDetail() {
   );
 
   if (!reminder) {
-    return <SafeAreaView className="flex-1 bg-mint" />;
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-mint">
+        <ActivityIndicator color={colors.primary} />
+      </SafeAreaView>
+    );
   }
 
   const finished = reminder.doneToday || !reminder.active;
@@ -111,8 +115,8 @@ export default function ReminderDetail() {
           <Text className="font-semibold text-primary">Editar</Text>
         </Pressable>
 
-        <Pressable onPress={handleDelete} className="mt-3 items-center rounded-full border border-danger py-3.5">
-          <Text className="font-semibold text-danger">Eliminar</Text>
+        <Pressable onPress={handleDelete} className="mt-4 items-center py-2" hitSlop={8}>
+          <Text className="text-sm font-medium text-danger">Eliminar recordatorio</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

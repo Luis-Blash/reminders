@@ -19,6 +19,7 @@ export function IntervalStepper({
       <View className="flex-row items-center gap-4">
         <Pressable
           onPress={() => onChange(Math.max(min, value - 1))}
+          hitSlop={8}
           className="h-8 w-8 items-center justify-center rounded-full bg-surface"
         >
           <Text className="text-lg font-bold text-primary">–</Text>
@@ -26,12 +27,13 @@ export function IntervalStepper({
         <Text className="min-w-[24px] text-center text-base font-semibold text-navy">{value}</Text>
         <Pressable
           onPress={() => onChange(Math.min(max, value + 1))}
+          hitSlop={8}
           className="h-8 w-8 items-center justify-center rounded-full bg-surface"
         >
           <Text className="text-lg font-bold text-primary">+</Text>
         </Pressable>
       </View>
-      <Text className="text-sm text-navy">días</Text>
+      <Text className="text-sm text-navy">{value === 1 ? 'día' : 'días'}</Text>
     </View>
   );
 }

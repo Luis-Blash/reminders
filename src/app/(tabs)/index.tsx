@@ -12,7 +12,7 @@ import type { RepeatRule } from '@/domain/types';
 import * as reminderService from '@/services/reminderService';
 import type { ReminderListItem } from '@/services/reminderService';
 import { colors } from '@/theme/tokens';
-import { parseIsoDate, toIsoDate } from '@/utils/date';
+import { formatShortDate, parseIsoDate, toIsoDate } from '@/utils/date';
 import { hasCompletedOnboarding } from '@/utils/onboarding';
 
 type Filter = 'todos' | 'pendientes' | 'hechos';
@@ -137,7 +137,7 @@ export default function Home() {
           >
             <Ionicons name="calendar-outline" size={14} color={selectedDate ? colors.surface : colors.navy} />
             <Text className={`text-sm font-medium ${selectedDate ? 'text-surface' : 'text-navy'}`}>
-              {selectedDate ?? 'Fecha'}
+              {selectedDate ? formatShortDate(selectedDate) : 'Fecha'}
             </Text>
           </Pressable>
           {selectedDate && (

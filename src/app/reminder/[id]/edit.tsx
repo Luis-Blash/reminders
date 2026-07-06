@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReminderForm } from '@/components/ReminderForm';
@@ -19,7 +19,11 @@ export default function EditReminder() {
   }, [id]);
 
   if (!reminder) {
-    return <SafeAreaView className="flex-1 bg-mint" />;
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-mint">
+        <ActivityIndicator color={colors.primary} />
+      </SafeAreaView>
+    );
   }
 
   return (

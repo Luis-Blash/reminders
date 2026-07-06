@@ -4,7 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useCallback, useState } from 'react';
 import { Alert, Linking, Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { exportBackup, importBackup } from '@/services/backupService';
 import { getPermissionStatus, requestPermissions } from '@/services/notificationService';
@@ -14,6 +14,7 @@ export default function Settings() {
   const router = useRouter();
   const [status, setStatus] = useState<Notifications.PermissionStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     useCallback(() => {
@@ -59,7 +60,8 @@ export default function Settings() {
             try {
               const result = await importBackup();
               if (result) {
-                Alert.alert('Listo', `Se importaron ${result.remindersCount} recordatorio(s).`);
+                const noun = result.remindersCount === 1 ? 'recordatorio' : 'recordatorios';
+                Alert.alert('Listo', `Se importaron ${result.remindersCount} ${noun}.`);
               }
             } catch {
               Alert.alert('Error', 'No se pudo importar el backup. Verifica el archivo.');
@@ -112,7 +114,7 @@ export default function Settings() {
           <Ionicons name="chevron-forward" size={20} color={colors.gray} />
         </Pressable>
 
-        <View className="mb-3 flex-row items-center justify-between rounded-card bg-surface p-4">
+        <View className="mb-3 flex-row items-center justify-between rounded-card bg-surface p-4 opacity-50">
           <Text className="text-base font-semibold text-navy">Tema</Text>
           <Text className="text-sm text-gray">Claro · Oscuro (próximamente)</Text>
         </View>
@@ -146,7 +148,7 @@ export default function Settings() {
         </Pressable>
       </View>
 
-      <View className="mt-auto items-center pb-6">
+      <View className="mt-auto items-center" style={{ paddingBottom: Math.max(insets.bottom, 24) }}>
         <Text className="text-xs text-gray">
           Recordatorios · v{Constants.expoConfig?.version ?? '0.0.0'}
         </Text>

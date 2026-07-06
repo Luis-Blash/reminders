@@ -57,8 +57,11 @@ export function formatRepeatLabel(schedule: Schedule): string {
         .join(', ');
       return days || 'Semanal';
     }
-    case 'custom':
-      return `Cada ${schedule.intervalDays ?? '?'} días`;
+    case 'custom': {
+      if (!schedule.intervalDays) return 'Cada varios días';
+      const n = schedule.intervalDays;
+      return `Cada ${n} ${n === 1 ? 'día' : 'días'}`;
+    }
     default:
       return '';
   }
