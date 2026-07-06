@@ -6,7 +6,7 @@ import { Pressable, Switch, Text, View } from 'react-native';
 
 import type { ScheduleFormInput } from '@/services/reminderService';
 import { colors } from '@/theme/tokens';
-import { formatTime, parseIsoDate, toIsoDate } from '@/utils/date';
+import { formatShortDate, formatTime, parseIsoDate, toIsoDate } from '@/utils/date';
 
 import { IntervalStepper } from './IntervalStepper';
 import { RepeatSegmented } from './RepeatSegmented';
@@ -48,9 +48,9 @@ export function ScheduleRow({ value, onChange, onRemove, onPressTime }: Props) {
             onPress={() => setShowOnceDatePicker(true)}
             className="flex-row items-center justify-between rounded-control bg-mint px-4 py-3"
           >
-            <Text className="text-sm text-navy">Fecha</Text>
+            <Text className="text-sm text-navy">Fecha del recordatorio</Text>
             <Text className="text-sm font-semibold text-navy">
-              {value.onceDate ?? toIsoDate(new Date())}
+              {formatShortDate(value.onceDate ?? toIsoDate(new Date()))}
             </Text>
           </Pressable>
           {showOnceDatePicker && (
@@ -71,7 +71,7 @@ export function ScheduleRow({ value, onChange, onRemove, onPressTime }: Props) {
       {value.repeat === 'daily' && (
         <View className="mt-3 gap-2">
           <View className="flex-row items-center justify-between rounded-control bg-mint px-4 py-3">
-            <Text className="text-sm text-navy">Terminar después de N días</Text>
+            <Text className="text-sm text-navy">Poner fecha límite</Text>
             <Switch
               value={!!value.endDate}
               onValueChange={(enabled) =>
@@ -84,13 +84,18 @@ export function ScheduleRow({ value, onChange, onRemove, onPressTime }: Props) {
             />
           </View>
           {value.endDate && (
-            <IntervalStepper
-              label="Terminar después de"
-              value={endDateDays}
-              min={1}
-              max={365}
-              onChange={(days) => onChange({ ...value, endDate: toIsoDate(addDays(startOfDay(new Date()), days - 1)) })}
-            />
+            <>
+              <IntervalStepper
+                label="Terminar después de"
+                value={endDateDays}
+                min={1}
+                max={365}
+                onChange={(days) => onChange({ ...value, endDate: toIsoDate(addDays(startOfDay(new Date()), days - 1)) })}
+              />
+              <Text className="px-1 text-xs text-gray">
+                Dejará de sonar el {formatShortDate(value.endDate)}
+              </Text>
+            </>
           )}
         </View>
       )}
@@ -110,13 +115,17 @@ export function ScheduleRow({ value, onChange, onRemove, onPressTime }: Props) {
             value={value.intervalDays ?? 2}
             onChange={(intervalDays) => onChange({ ...value, intervalDays })}
           />
+          <Text className="px-1 text-xs text-gray">
+            Por ejemplo, cada {value.intervalDays ?? 2} días: hoy, luego en{' '}
+            {value.intervalDays ?? 2} días, luego en {(value.intervalDays ?? 2) * 2} días...
+          </Text>
           <Pressable
             onPress={() => setShowStartDatePicker(true)}
             className="flex-row items-center justify-between rounded-control bg-mint px-4 py-3"
           >
             <Text className="text-sm text-navy">Fecha de inicio</Text>
             <Text className="text-sm font-semibold text-navy">
-              {value.startDate ?? toIsoDate(new Date())}
+              {formatShortDate(value.startDate ?? toIsoDate(new Date()))}
             </Text>
           </Pressable>
           {showStartDatePicker && (

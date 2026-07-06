@@ -1,6 +1,6 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MonthCalendar } from '@/components/MonthCalendar';
@@ -9,6 +9,7 @@ import { getCalendarMarks } from '@/services/reminderService';
 import { formatTime, toIsoDate } from '@/utils/date';
 
 export default function CalendarScreen() {
+  const router = useRouter();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -58,10 +59,14 @@ export default function CalendarScreen() {
               : 'Sin recordatorios este día'}
           </Text>
           {selectedMark?.reminders.map((r, i) => (
-            <View key={`${r.id}-${i}`} className="mb-2 rounded-card bg-surface p-3">
+            <Pressable
+              key={`${r.id}-${i}`}
+              onPress={() => router.push(`/reminder/${r.id}`)}
+              className="mb-2 rounded-card bg-surface p-3"
+            >
               <Text className="text-base font-medium text-navy">{r.title}</Text>
               <Text className="mt-0.5 text-sm text-gray">{formatTime(r.hour, r.minute)}</Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       </ScrollView>

@@ -60,8 +60,12 @@ export async function exportBackup(): Promise<void> {
 }
 
 export async function importBackup(): Promise<{ remindersCount: number } | null> {
+  // Android SAF no siempre reporta "application/json" para archivos .json
+  // (varía por gestor de archivos/proveedor), así que filtrar por ese MIME
+  // deja el archivo atenuado/no seleccionable. Se usa '*/*' y se valida el
+  // contenido después (isBackupFile) en vez de confiar en el MIME reportado.
   const result = await DocumentPicker.getDocumentAsync({
-    type: 'application/json',
+    type: '*/*',
     copyToCacheDirectory: true,
   });
   if (result.canceled) return null;

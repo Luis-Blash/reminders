@@ -6,7 +6,7 @@ const OPTIONS: { value: RepeatRule; label: string }[] = [
   { value: 'once', label: 'Una vez' },
   { value: 'daily', label: 'Diario' },
   { value: 'weekly', label: 'Semanal' },
-  { value: 'custom', label: 'Cada N días' },
+  { value: 'custom', label: 'Cada varios días' },
 ];
 
 export function RepeatSegmented({

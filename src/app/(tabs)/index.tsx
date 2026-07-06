@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, SectionList, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, SectionList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
@@ -21,7 +21,7 @@ const REPEAT_SECTIONS: { key: RepeatRule; title: string }[] = [
   { key: 'once', title: 'Una vez' },
   { key: 'daily', title: 'Diario' },
   { key: 'weekly', title: 'Semanal' },
-  { key: 'custom', title: 'Cada N días' },
+  { key: 'custom', title: 'Cada varios días' },
 ];
 
 function groupByRepeat(items: ReminderListItem[]): { title: string; data: ReminderListItem[] }[] {
@@ -38,6 +38,7 @@ export default function Home() {
   const [filter, setFilter] = useState<Filter>('todos');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     const seenOnboarding = await hasCompletedOnboarding();
@@ -66,6 +67,15 @@ export default function Home() {
     if (filter === 'hechos') return r.doneToday || !r.active;
     return true;
   });
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   async function handleToggleDone(reminder: ReminderListItem) {
     if (reminder.doneToday || !reminder.active) return;
@@ -163,6 +173,9 @@ export default function Home() {
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-24 pt-2"
           stickySectionHeadersEnabled={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.primary]} tintColor={colors.primary} />
+          }
           renderSectionHeader={({ section }) => (
             <Text className="mb-2 mt-2 text-xs font-semibold uppercase text-gray">{section.title}</Text>
           )}

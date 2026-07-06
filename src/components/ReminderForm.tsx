@@ -1,6 +1,7 @@
 import { isAfter, isBefore, startOfDay } from 'date-fns';
 import { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ScheduleFormInput } from '@/services/reminderService';
 import { newId } from '@/utils/id';
@@ -52,6 +53,7 @@ export function ReminderForm({ initialTitle, initialNotes, initialSchedules, sub
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const sheetRef = useRef<TimePickerSheetHandle>(null);
+  const insets = useSafeAreaInsets();
 
   function updateSchedule(key: string, patch: Partial<RowState>) {
     setSchedules((prev) => prev.map((s) => (s.key === key ? { ...s, ...patch } : s)));
@@ -159,7 +161,10 @@ export function ReminderForm({ initialTitle, initialNotes, initialSchedules, sub
         {error && <Text className="mt-4 text-sm text-danger">{error}</Text>}
       </ScrollView>
 
-      <View className="border-t border-gray/10 bg-surface px-4 py-4">
+      <View
+        className="border-t border-gray/10 bg-surface px-4 pt-4"
+        style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+      >
         <Pressable
           onPress={handleSubmit}
           disabled={saving}

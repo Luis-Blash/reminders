@@ -1,10 +1,11 @@
 {
-  "enabledPlugins": {
-    "expo@claude-plugins-official": true
-  },
   "permissions": {
     "allow": [
-      "Bash(xargs grep -l \"class FileSystemFile\\\\|FileSystemFile\")"
+      "Bash(xargs grep -l \"class FileSystemFile\\\\|FileSystemFile\")",
+      "WebSearch"
     ]
+  },
+  "enabledPlugins": {
+    "expo@claude-plugins-official": true
   }
 }
